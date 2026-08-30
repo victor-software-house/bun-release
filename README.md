@@ -28,11 +28,10 @@ Normal CI publish stays OIDC.
 import { bootstrapNpmPackages } from 'bun-release';
 
 await bootstrapNpmPackages(
-	stagePlatforms().map(({ dir, name, version }) => ({
-		directory: dir,
-		name,
-		version,
-	})),
+	[
+		{ name: '@scope/pkg-darwin-arm64', version: '0.0.0', directory: './dist/npm/darwin-arm64' },
+		{ name: '@scope/pkg-linux-x64', version: '0.0.0', directory: './dist/npm/linux-x64' },
+	],
 	'owner/repo',
 	'release.yml',
 );
