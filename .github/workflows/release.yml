@@ -61,8 +61,9 @@ jobs:
           version: mise run version
           commit: "chore(release): version packages"
           title: "chore(release): version packages"
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          github-token: ${{ steps.app-token.outputs.token }}
+          setupGitUser: false
+          commitMode: github-api
 
       - name: Mint npm OIDC token
         if: steps.changesets.outputs.hasChangesets == 'false'
