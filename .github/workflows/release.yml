@@ -66,6 +66,8 @@ jobs:
           github-token: ${{ steps.app-token.outputs.token }}
           setupGitUser: false
           commitMode: github-api
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: Mint npm OIDC token
         if: steps.changesets.outputs.hasChangesets == 'false'
