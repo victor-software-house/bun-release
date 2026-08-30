@@ -9,6 +9,6 @@
 		"*.config.ts"
 	],
 	"ignoreExportsUsedInFile": true,
-	"ignoreBinaries": ["mise"],
+	"ignoreBinaries": ["mise", "xdg-open"],
 	"ignoreDependencies": ["@biomejs/biome", "@changesets/cli", "@commitlint/cli", "bun-release"]
 }

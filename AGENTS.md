@@ -10,7 +10,7 @@ Library for public-npm OIDC → `BUN_CONFIG_TOKEN` → `bun publish`. GitHub is
 
 | Path | Role |
 | --- | --- |
-| [`src/`](./src/) | Packument lookup, OIDC handshake, changelog slice, tag peel, publish/tag orchestration |
+| [`src/`](./src/) | Packument lookup, OIDC handshake, one-time npm bootstrap, changelog slice, tag peel, publish/tag orchestration |
 | [`test/`](./test/) | bun tests against `dist` |
 | [`mise-tasks/`](./mise-tasks/) | This repo's own release tasks; they import `bun-release` from `dist` |
 
@@ -45,11 +45,17 @@ tag.
    If squash-merging from the web UI, clear the generated `Co-authored-by:`
    trailer.
 
-`0.0.0` is the bootstrap: operator `bun publish --access public` with a local
-npmjs token, tag `v0.0.0`, then `npm trust` for
-[`.github/workflows/release.yml`](./.github/workflows/release.yml). The first
-changeset is a patch to `0.0.1`. Do not add a changeset before that bootstrap
-is live. That local path is not OIDC.
+`0.0.0` is already on npm. Later first-package names use
+`bootstrapNpmPackages` — not a long-lived token. The helper posts npm's web
+login (`POST /-/v1/login`), opens the printed URL, polls `doneUrl` for a
+two-hour session, writes that token into a **temporary** `HOME/.npmrc`, runs
+`bun publish --access public --registry`, then `GET`/`POST` `/-/package/<name>/trust`
+for GitHub + `createPackage` on the given workflow file. It never invokes the
+npm CLI. Auth never leaves the sandbox; `finally` deletes the temp home.
+
+Operator-level `~/.npmrc` / `~/.bunfig.toml` that map
+`@victor-software-house` to GitHub Packages do not apply: publish env is
+`PATH`, `HOME=<sandbox>`, `TMPDIR` only.
 
 This package cannot `bun add bun-release` for its first publish. Its mise-tasks
 import `dist` after `depends = ["build"]`.
@@ -60,8 +66,8 @@ import `dist` after `depends = ["build"]`.
   step is `bun publish --access public --tolerate-republish`. Bun reads the
   token from [`bunfig.toml`](./bunfig.toml). Do not use `bunx npm` or
   `NPM_CONFIG_FORCE`.
-- Do not add `NPM_TOKEN` / `NODE_AUTH_TOKEN`. Do not pass `publish:` to
-  `changesets/action`.
+- Do not add `NPM_TOKEN` / `NODE_AUTH_TOKEN`. Do not store a publish token in
+  1Password or fnox. Do not pass `publish:` to `changesets/action`.
 - Unscoped publish needs the **default registry** token in bunfig, not only the
   `@victor-software-house` scope line. Never add a repo `.npmrc`.
 - Never `major` on `0.x` unless explicitly decided.

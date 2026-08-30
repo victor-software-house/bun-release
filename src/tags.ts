@@ -16,7 +16,7 @@ export async function tagAndGithubRelease(version: string): Promise<void> {
 	const sha = (await $`git rev-parse HEAD`.text()).trim();
 	const refspec = `refs/tags/${tag}:refs/tags/${tag}`;
 
-	if (env['GITHUB_ACTIONS'] === 'true') {
+	if (env.GITHUB_ACTIONS === 'true') {
 		await $`git config user.name ${'github-actions[bot]'}`;
 		await $`git config user.email ${'41898282+github-actions[bot]@users.noreply.github.com'}`;
 	}

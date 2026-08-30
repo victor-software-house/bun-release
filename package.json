@@ -58,6 +58,7 @@
 		"changesets"
 	],
 	"dependencies": {
+		"p-retry": "8.0.0",
 		"ts-pattern": "5.9.0"
 	},
 	"devDependencies": {
@@ -72,6 +73,7 @@
 		"@types/node": "26.4.0",
 		"@victor-software-house/anti-slop": "0.0.1",
 		"bun-release": ".",
+		"dedent": "1.7.2",
 		"knip": "6.33.0",
 		"liquidjs": "10.29.0",
 		"oxlint": "1.80.0",

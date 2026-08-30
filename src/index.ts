@@ -1,7 +1,11 @@
+export type { NpmBootstrapOptions, NpmBootstrapPackage, OpenLoginUrl } from '@release/bootstrap';
+export { bootstrapNpmPackages } from '@release/bootstrap';
 export { changelogSection } from '@release/changelog';
 export { peeledTagSha, thisCommitBumpedVersion } from '@release/git';
 export { writeMaskedGithubEnv } from '@release/github-env';
 export { npmOidcPublishToken } from '@release/oidc';
 export { publishIfNeeded } from '@release/publish';
-export { NPM_REGISTRY, registryHasVersion } from '@release/registry';
+export { NPM_REGISTRY, registryHasVersion, waitForRegistryVersion } from '@release/registry';
+export type { RetryOptions } from '@release/retry';
+export { loginRetry, publishRetry, retry } from '@release/retry';
 export { tagAndGithubRelease } from '@release/tags';

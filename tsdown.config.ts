@@ -15,6 +15,6 @@ export default defineConfig({
 	dts: { tsconfig: 'tsconfig.build.json' },
 	deps: {
 		onlyBundle: [],
-		onlyImport: ['ts-pattern', 'bun'],
+		onlyImport: ['ts-pattern', 'bun', 'p-retry'],
 	},
 });

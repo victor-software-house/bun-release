@@ -1,3 +1,5 @@
+import type { RetryOptions } from '@release/retry';
+import { publishRetry, retry } from '@release/retry';
 import { match, P } from 'ts-pattern';
 
 export const NPM_REGISTRY = 'https://registry.npmjs.org/';
@@ -22,4 +24,18 @@ export async function registryHasVersion(
 		.otherwise(() => {
 			throw new Error(`npm registry packument missing versions for ${name}@${version}`);
 		});
+}
+
+export async function waitForRegistryVersion(
+	name: string,
+	version: string,
+	registry: string = NPM_REGISTRY,
+	options: RetryOptions = publishRetry,
+): Promise<void> {
+	await retry(async () => {
+		if (await registryHasVersion(name, version, registry)) {
+			return;
+		}
+		throw new Error(`npm registry did not observe ${name}@${version}`);
+	}, options);
 }

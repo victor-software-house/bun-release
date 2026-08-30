@@ -4,7 +4,7 @@
 import { env, exit, stderr } from 'node:process';
 import { match, P } from 'ts-pattern';
 
-if (env['CI'] === 'true') {
+if (env.CI === 'true') {
 	exit(0);
 }
 

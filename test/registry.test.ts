@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { NPM_REGISTRY, registryHasVersion } from 'bun-release';
+import {
+	NPM_REGISTRY,
+	publishRetry,
+	registryHasVersion,
+	waitForRegistryVersion,
+} from 'bun-release';
 import { match, P } from 'ts-pattern';
 
 const originalFetch = globalThis.fetch;
@@ -46,5 +51,38 @@ describe('registryHasVersion', () => {
 			return new Response(JSON.stringify({ versions: { '0.0.1': {} } }), { status: 200 });
 		});
 		expect(await registryHasVersion('@victor-software-house/anti-slop', '0.0.1')).toBe(true);
+	});
+});
+
+describe('waitForRegistryVersion', () => {
+	const fast = { ...publishRetry, retries: 2, minTimeout: 1, maxRetryTime: 500 };
+
+	test('returns once the packument lists the version', async () => {
+		let calls = 0;
+		installFetch(async () => {
+			calls += 1;
+			if (calls === 1) {
+				return new Response('{"error":"Not found"}', { status: 404 });
+			}
+			return new Response(JSON.stringify({ versions: { '0.0.1': {} } }), { status: 200 });
+		});
+		await waitForRegistryVersion('bun-release', '0.0.1', NPM_REGISTRY, fast);
+		expect(calls).toBe(2);
+	});
+
+	test('throws when the version never appears', async () => {
+		installFetch(async () => new Response('{"error":"Not found"}', { status: 404 }));
+		let message = '';
+		try {
+			await waitForRegistryVersion('bun-release', '0.0.1', NPM_REGISTRY, {
+				...publishRetry,
+				retries: 0,
+				minTimeout: 1,
+				maxRetryTime: 100,
+			});
+		} catch (error) {
+			message = error instanceof Error ? error.message : '';
+		}
+		expect(message).toBe('npm registry did not observe bun-release@0.0.1');
 	});
 });

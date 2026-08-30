@@ -3,23 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { env, stdout } from 'node:process';
 import { thisCommitBumpedVersion } from '@release/git';
-import { registryHasVersion } from '@release/registry';
+import { registryHasVersion, waitForRegistryVersion } from '@release/registry';
 import { $ } from 'bun';
-
-async function waitForRegistryVersion(
-	name: string,
-	version: string,
-	remaining: number,
-): Promise<void> {
-	if (await registryHasVersion(name, version)) {
-		return;
-	}
-	if (remaining === 0) {
-		throw new Error(`npm registry did not observe ${name}@${version}`);
-	}
-	await Bun.sleep(5_000);
-	return waitForRegistryVersion(name, version, remaining - 1);
-}
 
 export async function publishIfNeeded(name: string, version: string): Promise<void> {
 	const specifier = `${name}@${version}`;
@@ -32,7 +17,7 @@ export async function publishIfNeeded(name: string, version: string): Promise<vo
 		return;
 	}
 	await $`bun publish --access public --tolerate-republish`;
-	await waitForRegistryVersion(name, version, 11);
+	await waitForRegistryVersion(name, version);
 	const installDir = await mkdtemp(join(tmpdir(), 'bun-release-smoke-'));
 	const cacheDir = await mkdtemp(join(tmpdir(), 'bun-release-cache-'));
 	await $`bun add ${specifier}`.cwd(installDir).env({
