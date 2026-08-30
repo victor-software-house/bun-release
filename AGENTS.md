@@ -10,7 +10,9 @@ Library for public-npm OIDC → `BUN_CONFIG_TOKEN` → `bun publish`. GitHub is
 
 | Path | Role |
 | --- | --- |
-| [`src/`](./src/) | Packument lookup, OIDC handshake, one-time npm bootstrap, changelog slice, tag peel, publish/tag orchestration |
+| [`src/npm/`](./src/npm/) | Registry HTTP: URLs, web auth, pack, PUT, packument, trust |
+| [`src/github/`](./src/github/) | GitHub Actions env output |
+| [`src/release/`](./src/release/) | OIDC, changelog, tags, publish orchestration, bootstrap composer |
 | [`test/`](./test/) | bun tests against `dist` |
 | [`mise-tasks/`](./mise-tasks/) | This repo's own release tasks; they import `bun-release` from `dist` |
 
@@ -36,8 +38,9 @@ tag.
 1. Author a `.changeset/*.md` file. Default bump is `patch`.
 2. Commit and push to `main` (or merge a PR).
 3. `changesets/action` opens a **"Version Packages" PR** (`mise run version` →
-   `changeset version` + `bun update --lockfile-only`). The PR title is the
-   commit title (`chore(release): version packages`).
+   `changeset version` + `bun update --lockfile-only`). The PR is opened with a
+   GitHub App installation token (`vsh-changeset-version`), not `github.token`.
+   The PR title is the commit title (`chore(release): version packages`).
 4. Operator merges that PR. GitHub deletes the head branch
    (`delete_branch_on_merge`). CI then runs `mise run release:oidc`,
    `mise run release`, then `mise run release:tags`.
@@ -47,11 +50,19 @@ tag.
 
 `0.0.0` is already on npm. Later first-package names use
 `bootstrapNpmPackages` — not a long-lived token. The helper posts npm's web
-login (`POST /-/v1/login`), opens the printed URL, polls `doneUrl` for a
-two-hour session, writes that token into a **temporary** `HOME/.npmrc`, runs
-`bun publish --access public --registry`, then `GET`/`POST` `/-/package/<name>/trust`
-for GitHub + `createPackage` on the given workflow file. It never invokes the
-npm CLI. Auth never leaves the sandbox; `finally` deletes the temp home.
+login (`POST /-/v1/login` with `{ hostname }` and `npm-auth-type: web`; an
+empty `{}` is treated as a publish and 401s), prints the URL and opens it (no
+Enter prompt; `browser: false` prints only), and polls `doneUrl` with
+`p-retry` (202 retries until 200 `{ token }` or `maxRetryTime`). It packs
+with `bun pm pack` using the operator environment (same as `bun install`).
+Publish is `PUT /{escapedPackageName}?access=public` with
+`Authorization: Bearer` and the documented publish document (`versions`,
+`dist` integrity/shasum, `_attachments` base64 tarball) — bunfig and `.npmrc`
+cannot redirect that PUT. A 401 otp
+with `authUrl`/`doneUrl` uses the same web-auth helper, then retries the same
+PUT with `npm-otp` (bun's TTY `get_otp` is never invoked). Then `GET`/`POST`
+`/-/package/<name>/trust` for GitHub + `createPackage`. It never invokes the
+npm CLI or `bun publish`. The pack tarball temp dir is deleted in `finally`.
 
 This is standing procedure, not one-shot migration: every new npm name hits
 the same wall. Re-running it is a guard — existing versions skip publish,
@@ -60,9 +71,10 @@ ships first-publish OIDC ([npm/cli#8544](https://github.com/npm/cli/issues/8544)
 The consumer mise task maps the same staged packages CI will publish; do not
 hand-type a package list or add a bun-release CLI.
 
-Operator-level `~/.npmrc` / `~/.bunfig.toml` that map
-`@victor-software-house` to GitHub Packages do not apply: publish env is
-`PATH`, `HOME=<sandbox>`, `TMPDIR` only.
+Operator-level `~/.npmrc` / `~/.bunfig.toml` can still apply to `bun pm pack`
+(needed if pack ever resolves scoped deps). They cannot apply to publish:
+the PUT is `fetch` to the npmjs URL with a Bearer session. CI publish is
+still `bun publish` with `BUN_CONFIG_TOKEN`.
 
 This package cannot `bun add bun-release` for its first publish. Its mise-tasks
 import `dist` after `depends = ["build"]`.
