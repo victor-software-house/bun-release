@@ -8,8 +8,7 @@ import { name } from '@repo/package.json' with { type: 'json' };
 import { npmOidcPublishToken, writeMaskedGithubEnv } from 'bun-release';
 import { match, P } from 'ts-pattern';
 
-const githubEnv = env.GITHUB_ENV;
-await match(githubEnv)
+await match(env.GITHUB_ENV)
 	.with(P.string.minLength(1), async (path) => {
 		const token = await npmOidcPublishToken(name, env);
 		await writeMaskedGithubEnv(path, token);

@@ -53,6 +53,13 @@ two-hour session, writes that token into a **temporary** `HOME/.npmrc`, runs
 for GitHub + `createPackage` on the given workflow file. It never invokes the
 npm CLI. Auth never leaves the sandbox; `finally` deletes the temp home.
 
+This is standing procedure, not one-shot migration: every new npm name hits
+the same wall. Re-running it is a guard — existing versions skip publish,
+matching trust is left alone, a mismatch fails. Delete the helper when npm
+ships first-publish OIDC ([npm/cli#8544](https://github.com/npm/cli/issues/8544)).
+The consumer mise task maps the same staged packages CI will publish; do not
+hand-type a package list or add a bun-release CLI.
+
 Operator-level `~/.npmrc` / `~/.bunfig.toml` that map
 `@victor-software-house` to GitHub Packages do not apply: publish env is
 `PATH`, `HOME=<sandbox>`, `TMPDIR` only.
