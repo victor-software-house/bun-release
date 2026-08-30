@@ -53,6 +53,8 @@ jobs:
         with:
           client-id: ${{ secrets.CHANGESET_VERSION_APP_CLIENT_ID }}
           private-key: ${{ secrets.CHANGESET_VERSION_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Create Version Packages PR
         id: changesets
