@@ -1,0 +1,115 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"suspicious": {
+				"noExplicitAny": "error",
+				"noImplicitAnyLet": "error",
+				"noConfusingVoidType": "error",
+				"noUnnecessaryConditions": "error"
+			},
+			"style": {
+				"useImportType": {
+					"level": "error",
+					"options": { "style": "separatedType" }
+				},
+				"useNodejsImportProtocol": "error",
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"patterns": [
+							{
+								"group": ["**/index"],
+								"message": "Remove /index suffix — Bun resolves it automatically."
+							},
+							{
+								"group": [".", "..", "./**", "../**"],
+								"message": "Relative imports are forbidden — use the package path alias."
+							}
+						]
+					}
+				},
+				"useConsistentBuiltinInstantiation": {
+					"level": "error",
+					"fix": "safe"
+				},
+				"useExplicitLengthCheck": "error",
+				"useConsistentArrayType": {
+					"level": "error",
+					"options": { "syntax": "shorthand" }
+				},
+				"useThrowOnlyError": "error",
+				"noEnum": "error"
+			},
+			"correctness": {
+				"noUnusedImports": {
+					"level": "error",
+					"fix": "safe"
+				},
+				"noUnusedVariables": {
+					"level": "error",
+					"fix": "none"
+				},
+				"noUnusedFunctionParameters": {
+					"level": "error",
+					"fix": "safe"
+				},
+				"noUndeclaredVariables": "error"
+			},
+			"performance": {
+				"noDelete": "error",
+				"noDynamicNamespaceImportAccess": "error"
+			},
+			"complexity": {
+				"noForEach": "error",
+				"noUselessTypeConstraint": "error",
+				"useLiteralKeys": "off"
+			},
+			"nursery": {
+				"noFloatingPromises": "error"
+			}
+		}
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"lineWidth": 100
+	},
+	"javascript": {
+		"globals": ["Bun"],
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "always"
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.test.ts"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noExplicitAny": "warn"
+					}
+				}
+			}
+		}
+	],
+	"files": {
+		"ignoreUnknown": true,
+		"includes": ["**", "!dist", "!tmp", "!node_modules"]
+	},
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	}
+}

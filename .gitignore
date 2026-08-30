@@ -1,0 +1,12 @@
+node_modules/
+dist/
+tmp/
+.tmp/
+.DS_Store
+*.tgz
+coverage/
+.env
+.env.*
+!.env.example
+mise.local.toml
+mise.*.local.toml

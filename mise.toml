@@ -1,0 +1,90 @@
+min_version = "2026.7.7"
+
+[tools]
+node = "26.8.1"
+bun = "1.4.0"
+lefthook = "2.1.12"
+
+[settings]
+experimental = true
+lockfile = true
+env_cache = true
+env_cache_ttl = "4h"
+fetch_remote_versions_cache = "12h"
+
+[env]
+_.path = { path = ["{{config_root}}/node_modules/.bin"], tools = true }
+
+[deps.bun]
+auto = true
+run = "bun install --frozen-lockfile"
+
+[hooks]
+postinstall = "lefthook install"
+
+[tasks.verify]
+description = "Full CI-safe verification gate: lint + deps + typecheck + unit tests + build"
+depends = ["lint", "deps", "typecheck", "test", "build"]
+run = "echo 'verify passed'"
+
+[tasks.deps]
+description = "Dependency and dead-export analysis (knip)"
+run = "knip --no-progress"
+
+[tasks.lint]
+description = "Lint: biome + oxlint in parallel"
+depends = ["lint:biome", "lint:oxlint"]
+
+[tasks."lint:biome"]
+hide = true
+run = "biome check ."
+
+[tasks."lint:oxlint"]
+hide = true
+depends = ["build"]
+run = "bun --bun oxlint"
+
+[tasks."lint:fix"]
+description = "Autofix lint: biome --write then oxlint --fix"
+depends = ["build"]
+run = ["biome check --write .", "bun --bun oxlint --fix"]
+
+[tasks.format]
+description = "Format with biome"
+run = "biome format --write ."
+
+[tasks.typecheck]
+description = "TypeScript typecheck (no emit)"
+depends = ["build"]
+run = "tsc --noEmit -p tsconfig.json"
+
+[tasks.test]
+description = "bun tests against published dist"
+depends = ["build"]
+run = "bun test"
+
+[tasks.build]
+description = "Build library with tsdown"
+sources = ["src/**/*.ts"]
+outputs = ["dist/**"]
+run = "tsdown"
+
+[tasks.pack]
+description = "Dry-run package contents"
+run = "bun pm pack --dry-run"
+
+[tasks.commitlint]
+description = "Conventional commit lint"
+run = "commitlint"
+
+[tasks."changeset:status"]
+description = "Check pending changesets against main"
+run = "changeset status --since=origin/main"
+
+[tasks.version]
+description = "Generate Changesets version PR changes"
+run = ["changeset version", "bun update --lockfile-only"]
+
+[tasks."lockfile:sync"]
+description = "Verify bun.lock matches package.json"
+run = "bun install --frozen-lockfile --dry-run"

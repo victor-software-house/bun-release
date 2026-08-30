@@ -1,0 +1,14 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	"entry": ["src/index.ts", "mise-tasks/**/*.ts", ".changeset/changelog.ts", "test/**/*.test.ts"],
+	"project": [
+		"src/**/*.ts",
+		"test/**/*.ts",
+		"mise-tasks/**/*.ts",
+		".changeset/**/*.ts",
+		"*.config.ts"
+	],
+	"ignoreExportsUsedInFile": true,
+	"ignoreBinaries": ["mise"],
+	"ignoreDependencies": ["@biomejs/biome", "@changesets/cli", "@commitlint/cli", "bun-release"]
+}

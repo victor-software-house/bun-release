@@ -1,0 +1,37 @@
+pre-commit:
+  commands:
+    format:
+      glob: '{,**/}*.{ts,tsx,js,jsx,json,jsonc,md,yml,yaml}'
+      run: mise run format -- {staged_files}
+      stage_fixed: true
+    lint:
+      run: mise run lint
+    typecheck:
+      run: mise run typecheck
+
+commit-msg:
+  commands:
+    commitlint:
+      run: bunx --bun commitlint --edit {1}
+
+pre-push:
+  commands:
+    lockfile-sync:
+      run: mise run --no-deps lockfile:sync
+    version-guard:
+      run: mise run --no-deps version-guard
+    typecheck:
+      run: mise run typecheck
+    lint:
+      run: mise run lint
+    test:
+      run: mise run test
+
+post-checkout:
+  commands:
+    worktree-setup:
+      run: |
+        if [ -f .git ]; then
+          mise install --locked
+          lefthook install
+        fi

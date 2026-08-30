@@ -1,0 +1,8 @@
+[install]
+registry = { url = "https://registry.npmjs.org", token = "$BUN_CONFIG_TOKEN" }
+
+[install.scopes]
+# BUN_CONFIG_TOKEN from the environment: `mise run release:oidc` in CI, operator
+# npmjs token locally. Never add an .npmrc — bun honours it, and a scope line
+# without a credential publishes unauthenticated.
+"@victor-software-house" = { url = "https://registry.npmjs.org", token = "$BUN_CONFIG_TOKEN" }
