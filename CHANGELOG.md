@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.2
+
+### Patch Changes
+
+- Smoke a published package with bun. Node cannot resolve `import { $ } from 'bun'` ([`2dbff19`](https://github.com/victor-software-house/bun-release/commit/2dbff19754665e20ce959ac726f0a0558c771c26)).
+
 ## 0.0.1
 
 ### Patch Changes
