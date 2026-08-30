@@ -25,6 +25,6 @@ export async function publishIfNeeded(name: string, version: string): Promise<vo
 		BUN_INSTALL_CACHE_DIR: cacheDir,
 		HOME: installDir,
 	});
-	await $`node --input-type=module -e ${`import ${JSON.stringify(name)}`}`.cwd(installDir);
+	await $`bun -e ${`import ${JSON.stringify(name)}`}`.cwd(installDir);
 	stdout.write(`published and smoked ${specifier}\n`);
 }
