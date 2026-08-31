@@ -54,7 +54,7 @@ export {
 export type { NpmBootstrapOptions, NpmBootstrapPackage } from '@release/release/bootstrap';
 export { bootstrapNpmPackages } from '@release/release/bootstrap';
 export { changelogSection } from '@release/release/changelog';
-export { peeledTagSha, thisCommitBumpedVersion } from '@release/release/git';
+export { peeledTagSha, remoteTagSha, thisCommitBumpedVersion } from '@release/release/git';
 export { npmOidcPublishToken } from '@release/release/oidc';
 export { publishIfNeeded } from '@release/release/publish';
 export type { RetryOptions } from '@release/release/retry';

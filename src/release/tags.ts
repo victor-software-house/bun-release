@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { env, stdout } from 'node:process';
 import { changelogSection } from '@release/release/changelog';
-import { peeledTagSha, thisCommitBumpedVersion } from '@release/release/git';
+import { remoteTagSha, thisCommitBumpedVersion } from '@release/release/git';
 import { $ } from 'bun';
 
 export async function tagAndGithubRelease(version: string): Promise<void> {
@@ -21,13 +21,11 @@ export async function tagAndGithubRelease(version: string): Promise<void> {
 		await $`git config user.email ${'41898282+github-actions[bot]@users.noreply.github.com'}`;
 	}
 
-	const remote = await $`git ls-remote --tags origin ${tag}`.text();
-	const remoteSha = peeledTagSha(remote, tag);
+	const remoteSha = await remoteTagSha('origin', tag);
 	if (remoteSha === undefined) {
 		await $`git tag -a ${tag} ${sha} -m ${tag}`;
 		await $`git push origin ${refspec}`;
-		const verified = await $`git ls-remote --tags origin ${tag}`.text();
-		const verifiedSha = peeledTagSha(verified, tag);
+		const verifiedSha = await remoteTagSha('origin', tag);
 		if (verifiedSha !== sha) {
 			throw new Error(
 				`tag ${tag} on origin is ${verifiedSha ?? 'missing'}, expected commit ${sha}`,

@@ -34,3 +34,8 @@ export function peeledTagSha(lsRemote: string, tag: string): string | undefined 
 		rows.find((row) => row.ref === peeledSuffix)?.sha ?? rows.find((row) => row.ref === suffix)?.sha
 	);
 }
+
+export async function remoteTagSha(remote: string, tag: string): Promise<string | undefined> {
+	const refs = await $`git ls-remote --tags ${remote}`.text();
+	return peeledTagSha(refs, tag);
+}
