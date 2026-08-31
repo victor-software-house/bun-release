@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.3
+
+### Patch Changes
+
+- Verify annotated release tags against their peeled commit instead of the tag object ([`a932293`](https://github.com/victor-software-house/bun-release/commit/a9322938d4bce125e6922a79b3dda65dbf9a5a69)).
+
 ## 0.0.2
 
 ### Patch Changes

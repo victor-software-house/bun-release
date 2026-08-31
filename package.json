@@ -1,6 +1,6 @@
 {
 	"name": "bun-release",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "OIDC bun-publish helpers for public npm.",
 	"license": "MIT",
 	"author": {
