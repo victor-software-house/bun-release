@@ -2,8 +2,8 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { env, stdout } from 'node:process';
-import { thisCommitBumpedVersion } from '@release/git';
-import { registryHasVersion, waitForRegistryVersion } from '@release/registry';
+import { registryHasVersion, waitForRegistryVersion } from '@release/npm/registry';
+import { thisCommitBumpedVersion } from '@release/release/git';
 import { $ } from 'bun';
 
 export async function publishIfNeeded(name: string, version: string): Promise<void> {

@@ -1,0 +1,358 @@
+openapi: 3.1.0
+info:
+  title: bun-release npm registry
+  version: 0.0.0
+  description: >
+    Local registry contract for bun-release. Compared to pnpm v12.1.0
+    Rust (`build_publish_document`, web login, OTP). See vendor/CONTRACT.md.
+    Not npm's public OpenAPI.
+servers:
+  - url: https://registry.npmjs.org
+security:
+  - bearer: []
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+    oidcIdToken:
+      type: http
+      scheme: bearer
+  parameters:
+    EscapedPackageName:
+      name: escapedPackageName
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Package name with `/` encoded as `%2f`.
+    AccessQuery:
+      name: access
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/NpmAccess'
+    NpmOtp:
+      name: npm-otp
+      in: header
+      required: false
+      schema:
+        type: string
+    NpmAuthType:
+      name: npm-auth-type
+      in: header
+      required: false
+      schema:
+        type: string
+        enum: [web, legacy]
+    NpmCommand:
+      name: npm-command
+      in: header
+      required: false
+      schema:
+        type: string
+  schemas:
+    NpmAccess:
+      type: string
+      enum: [public, restricted]
+    Dist:
+      type: object
+      additionalProperties: false
+      required: [integrity, shasum, tarball]
+      properties:
+        integrity:
+          type: string
+        shasum:
+          type: string
+        tarball:
+          type: string
+          format: uri
+    TarballAttachment:
+      type: object
+      additionalProperties: false
+      required: [content_type, data, length]
+      properties:
+        content_type:
+          type: string
+          enum: [application/octet-stream]
+        data:
+          type: string
+        length:
+          type: integer
+    VersionManifest:
+      type: object
+      additionalProperties: true
+      required: [_id, name, version, dist]
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        dist:
+          $ref: '#/components/schemas/Dist'
+    PublishDocument:
+      type: object
+      additionalProperties: false
+      required: [_id, name, dist-tags, versions, access, _attachments]
+      properties:
+        _id:
+          type: string
+          description: Package name only (pnpm 12).
+        name:
+          type: string
+        description:
+          type: string
+        dist-tags:
+          type: object
+          additionalProperties:
+            type: string
+        versions:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/VersionManifest'
+        access:
+          $ref: '#/components/schemas/NpmAccess'
+        _attachments:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TarballAttachment'
+    Packument:
+      type: object
+      additionalProperties: false
+      properties:
+        versions:
+          type: object
+          additionalProperties: true
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [hostname]
+      properties:
+        hostname:
+          type: string
+    LoginUrls:
+      type: object
+      additionalProperties: false
+      required: [loginUrl, doneUrl]
+      properties:
+        loginUrl:
+          type: string
+          format: uri
+        doneUrl:
+          type: string
+          format: uri
+    SessionToken:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          type: string
+    OtpChallenge:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        authUrl:
+          type: string
+          format: uri
+        doneUrl:
+          type: string
+          format: uri
+    TrustEntry:
+      type: object
+      additionalProperties: false
+      required: [type, claims]
+      properties:
+        type:
+          type: string
+        claims:
+          type: object
+          additionalProperties: false
+          required: [repository, workflow_ref]
+          properties:
+            repository:
+              type: string
+            workflow_ref:
+              type: object
+              additionalProperties: false
+              required: [file]
+              properties:
+                file:
+                  type: string
+        permissions:
+          type: array
+          items:
+            type: string
+    TrustCreate:
+      type: array
+      items:
+        $ref: '#/components/schemas/TrustEntry'
+    OidcExchange:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token_type:
+          type: string
+        token:
+          type: string
+        created:
+          type: string
+        expires:
+          type: string
+paths:
+  /-/v1/login:
+    post:
+      operationId: loginWeb
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/NpmAuthType'
+        - $ref: '#/components/parameters/NpmCommand'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Web login URLs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginUrls'
+  /-/v1/done:
+    get:
+      operationId: pollWebSession
+      security: []
+      parameters:
+        - name: sessionId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionToken'
+        '202':
+          description: Pending
+          headers:
+            Retry-After:
+              schema:
+                type: string
+  /{escapedPackageName}:
+    parameters:
+      - $ref: '#/components/parameters/EscapedPackageName'
+    get:
+      operationId: getPackument
+      security: []
+      responses:
+        '200':
+          description: Packument
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Packument'
+        '404':
+          description: Missing
+    put:
+      operationId: publishPackage
+      parameters:
+        - $ref: '#/components/parameters/AccessQuery'
+        - $ref: '#/components/parameters/NpmOtp'
+        - $ref: '#/components/parameters/NpmAuthType'
+        - $ref: '#/components/parameters/NpmCommand'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishDocument'
+      responses:
+        '200':
+          description: Published
+        '201':
+          description: Created
+        '409':
+          description: Already published
+        '401':
+          description: OTP or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpChallenge'
+  /-/package/{escapedPackageName}/trust:
+    parameters:
+      - $ref: '#/components/parameters/EscapedPackageName'
+    get:
+      operationId: listTrust
+      parameters:
+        - $ref: '#/components/parameters/NpmOtp'
+        - $ref: '#/components/parameters/NpmAuthType'
+      responses:
+        '200':
+          description: Trust entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrustEntry'
+        '401':
+          description: OTP or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpChallenge'
+        '404':
+          description: None
+    post:
+      operationId: createTrust
+      parameters:
+        - $ref: '#/components/parameters/NpmOtp'
+        - $ref: '#/components/parameters/NpmAuthType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrustCreate'
+      responses:
+        '200':
+          description: Created
+        '201':
+          description: Created
+        '401':
+          description: OTP or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpChallenge'
+  /-/npm/v1/oidc/token/exchange/package/{escapedPackageName}:
+    post:
+      operationId: exchangeOidcToken
+      security:
+        - oidcIdToken: []
+      parameters:
+        - $ref: '#/components/parameters/EscapedPackageName'
+      responses:
+        '200':
+          description: Registry token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OidcExchange'
+        '201':
+          description: Registry token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OidcExchange'

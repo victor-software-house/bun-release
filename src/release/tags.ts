@@ -2,8 +2,8 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { env, stdout } from 'node:process';
-import { changelogSection } from '@release/changelog';
-import { peeledTagSha, thisCommitBumpedVersion } from '@release/git';
+import { changelogSection } from '@release/release/changelog';
+import { peeledTagSha, thisCommitBumpedVersion } from '@release/release/git';
 import { $ } from 'bun';
 
 export async function tagAndGithubRelease(version: string): Promise<void> {

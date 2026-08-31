@@ -37,20 +37,34 @@ describe('registryHasVersion', () => {
 	test('is true when the packument lists the version', async () => {
 		installFetch(async (url) => {
 			expect(url).toBe(`${NPM_REGISTRY}bun-release`);
-			return new Response(JSON.stringify({ versions: { '0.0.0': {} } }), {
-				status: 200,
-				headers: { 'Content-Type': 'application/json' },
-			});
+			return Response.json({ versions: { '0.0.0': {} } });
 		});
 		expect(await registryHasVersion('bun-release', '0.0.0')).toBe(true);
 	});
 
 	test('encodes a scoped name in the packument URL', async () => {
+		const urls: string[] = [];
 		installFetch(async (url) => {
-			expect(url).toBe(`${NPM_REGISTRY}@victor-software-house%2Fanti-slop`);
-			return new Response(JSON.stringify({ versions: { '0.0.1': {} } }), { status: 200 });
+			urls.push(url);
+			return Response.json({ versions: { '0.0.1': {} } });
 		});
 		expect(await registryHasVersion('@victor-software-house/anti-slop', '0.0.1')).toBe(true);
+		expect(urls[0]).toBe(`${NPM_REGISTRY}@victor-software-house%2fanti-slop`);
+	});
+
+	test('sends Authorization when a token is given', async () => {
+		const headers: string[] = [];
+		const stub = Object.assign(
+			async (input: string | URL | Request, init?: RequestInit) => {
+				const request = input instanceof Request ? input : new Request(input.toString(), init);
+				headers.push(request.headers.get('authorization') ?? '');
+				return Response.json({ versions: { '0.0.0': {} } });
+			},
+			{ preconnect: () => undefined },
+		);
+		globalThis.fetch = stub;
+		expect(await registryHasVersion('bun-release', '0.0.0', NPM_REGISTRY, 'session')).toBe(true);
+		expect(headers[0]).toBe('Bearer session');
 	});
 });
 
@@ -61,10 +75,9 @@ describe('waitForRegistryVersion', () => {
 		let calls = 0;
 		installFetch(async () => {
 			calls += 1;
-			if (calls === 1) {
-				return new Response('{"error":"Not found"}', { status: 404 });
-			}
-			return new Response(JSON.stringify({ versions: { '0.0.1': {} } }), { status: 200 });
+			return match(calls)
+				.with(1, () => new Response('{"error":"Not found"}', { status: 404 }))
+				.otherwise(() => Response.json({ versions: { '0.0.1': {} } }));
 		});
 		await waitForRegistryVersion('bun-release', '0.0.1', NPM_REGISTRY, fast);
 		expect(calls).toBe(2);

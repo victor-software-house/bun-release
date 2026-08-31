@@ -19,11 +19,10 @@ function requestUrl(input: string | URL | Request): string {
 		.exhaustive();
 }
 
-function installFetch(handler: (url: string, init?: RequestInit) => Promise<Response>): void {
-	const stub = Object.assign(
-		async (input: string | URL | Request, init?: RequestInit) => handler(requestUrl(input), init),
-		{ preconnect: () => undefined },
-	);
+function installFetch(handler: (url: string) => Promise<Response>): void {
+	const stub = Object.assign(async (input: string | URL | Request) => handler(requestUrl(input)), {
+		preconnect: () => undefined,
+	});
 	globalThis.fetch = stub;
 }
 
@@ -42,13 +41,18 @@ describe('npmOidcPublishToken', () => {
 
 	test('exchanges the GitHub id-token for an npm publish token', async () => {
 		const calls: string[] = [];
-		installFetch(async (url, init) => {
+		installFetch(async (url) => {
 			calls.push(url);
-			if (url.includes('audience=')) {
-				return new Response(JSON.stringify({ value: 'github-id-token' }), { status: 200 });
-			}
-			expect(init?.method).toBe('POST');
-			return new Response(JSON.stringify({ token: 'npm-publish-token' }), { status: 200 });
+			return match(url)
+				.when(
+					(value) => value.includes('audience='),
+					() => Response.json({ value: 'github-id-token' }),
+				)
+				.when(
+					(value) => value.includes('/-/npm/v1/oidc/token/exchange/package/'),
+					() => Response.json({ token: 'npm-publish-token' }),
+				)
+				.otherwise(() => new Response('not found', { status: 404 }));
 		});
 		const token = await npmOidcPublishToken('bun-release', {
 			ACTIONS_ID_TOKEN_REQUEST_URL: 'https://token.actions.githubusercontent.com/session',
@@ -56,6 +60,27 @@ describe('npmOidcPublishToken', () => {
 		});
 		expect(token).toBe('npm-publish-token');
 		expect(calls[1]).toContain('/-/npm/v1/oidc/token/exchange/package/bun-release');
+	});
+
+	test('encodes a scoped name without percent-encoding @', async () => {
+		const calls: string[] = [];
+		installFetch(async (url) => {
+			calls.push(url);
+			return match(url)
+				.when(
+					(value) => value.includes('audience='),
+					() => Response.json({ value: 'github-id-token' }),
+				)
+				.otherwise(() => Response.json({ token: 'npm-publish-token' }));
+		});
+		await npmOidcPublishToken('@victor-software-house/exa-cli-darwin-arm64', {
+			ACTIONS_ID_TOKEN_REQUEST_URL: 'https://token.actions.githubusercontent.com/session',
+			ACTIONS_ID_TOKEN_REQUEST_TOKEN: 'gha-token',
+		});
+		expect(calls[1]).toContain(
+			'/-/npm/v1/oidc/token/exchange/package/@victor-software-house%2fexa-cli-darwin-arm64',
+		);
+		expect(calls[1]).not.toContain('%40');
 	});
 });
 

@@ -26,6 +26,9 @@
 				"noRestrictedImports": {
 					"level": "error",
 					"options": {
+						"paths": {
+							"zod/v3": "Zod v3 is forbidden. Import from 'zod'."
+						},
 						"patterns": [
 							{
 								"group": ["**/index"],
@@ -93,6 +96,25 @@
 	},
 	"overrides": [
 		{
+			"includes": ["src/generated/client/**", "src/generated/core/**"],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noExplicitAny": "off",
+						"useIterableCallbackReturn": "off",
+						"noUnnecessaryConditions": "off"
+					},
+					"complexity": {
+						"noForEach": "off",
+						"noBannedTypes": "off"
+					},
+					"style": {
+						"noNonNullAssertion": "off"
+					}
+				}
+			}
+		},
+		{
 			"includes": ["**/*.test.ts"],
 			"linter": {
 				"rules": {
@@ -105,7 +127,7 @@
 	],
 	"files": {
 		"ignoreUnknown": true,
-		"includes": ["**", "!dist", "!tmp", "!node_modules"]
+		"includes": ["**", "!dist", "!tmp", "!node_modules", "!vendor/*.yaml"]
 	},
 	"vcs": {
 		"enabled": true,

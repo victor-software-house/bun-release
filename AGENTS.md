@@ -10,7 +10,9 @@ Library for public-npm OIDC → `BUN_CONFIG_TOKEN` → `bun publish`. GitHub is
 
 | Path | Role |
 | --- | --- |
-| [`src/npm/`](./src/npm/) | Registry HTTP: URLs, web auth, pack, PUT, packument, trust |
+| [`src/npm/`](./src/npm/) | Registry HTTP: generated SDK + pack/PUT/trust helpers |
+| [`src/generated/`](./src/generated/) | Hey API output — regenerate, do not edit. `output.header` prepends `// @ts-nocheck` (Ky client does not typecheck under `exactOptionalPropertyTypes`). |
+| [`vendor/CONTRACT.md`](./vendor/CONTRACT.md) | pnpm 12 pin, endpoint map, divergences — do not re-research |
 | [`src/github/`](./src/github/) | GitHub Actions env output |
 | [`src/release/`](./src/release/) | OIDC, changelog, tags, publish orchestration, bootstrap composer |
 | [`test/`](./test/) | bun tests against `dist` |
@@ -48,20 +50,33 @@ tag.
    If squash-merging from the web UI, clear the generated `Co-authored-by:`
    trailer.
 
+Registry wire format is pinned in [`vendor/CONTRACT.md`](./vendor/CONTRACT.md)
+(pnpm `v12.1.0` Rust). Local OpenAPI is [`vendor/npm-registry.yaml`](./vendor/npm-registry.yaml).
+
 `0.0.0` is already on npm. Later first-package names use
 `bootstrapNpmPackages` — not a long-lived token. The helper posts npm's web
 login (`POST /-/v1/login` with `{ hostname }` and `npm-auth-type: web`; an
 empty `{}` is treated as a publish and 401s), prints the URL and opens it (no
 Enter prompt; `browser: false` prints only), and polls `doneUrl` with
-`p-retry` (202 retries until 200 `{ token }` or `maxRetryTime`). It packs
+Ky until 200 `{ token }` (`loginRetry` limit + `AbortSignal.timeout`; first GET
+waits the poll interval; 404 and
+empty 200 retry on the interval; 202 waits `max(interval, Retry-After ms)`). It packs
 with `bun pm pack` using the operator environment (same as `bun install`).
-Publish is `PUT /{escapedPackageName}?access=public` with
+Publish is `PUT /{escapedPackageName}` with
 `Authorization: Bearer` and the documented publish document (`versions`,
 `dist` integrity/shasum, `_attachments` base64 tarball) — bunfig and `.npmrc`
 cannot redirect that PUT. A 401 otp
 with `authUrl`/`doneUrl` uses the same web-auth helper, then retries the same
-PUT with `npm-otp` (bun's TTY `get_otp` is never invoked). Then `GET`/`POST`
-`/-/package/<name>/trust` for GitHub + `createPackage`. It never invokes the
+PUT with `npm-otp` (bun's TTY `get_otp` is never invoked). Missing packages
+pack concurrently; PUTs stay serial because OTP is one-shot. Each accepted PUT
+starts an independent public-packument visibility poll, and the next PUT starts
+immediately. Bootstrap waits for all visibility polls together before serial
+`GET`/`POST` `/-/package/<name>/trust` for GitHub + `createPackage` (same Bearer session;
+trust requires `npm-otp` — a 401 with `authUrl`/`doneUrl` reuses the PUT web-auth
+flow). A successful create response is final; do not immediately spend another
+OTP on a redundant verification GET. Bootstrap waits two seconds between npmjs
+trust packages and retries non-OTP 429 responses using `Retry-After` or capped
+backoff. Never replay a one-time password after 429. It never invokes the
 npm CLI or `bun publish`. The pack tarball temp dir is deleted in `finally`.
 
 This is standing procedure, not one-shot migration: every new npm name hits

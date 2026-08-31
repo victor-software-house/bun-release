@@ -24,7 +24,7 @@ postinstall = "lefthook install"
 
 [tasks.verify]
 description = "Full CI-safe verification gate: lint + deps + typecheck + unit tests + build"
-depends = ["lint", "deps", "typecheck", "test", "build"]
+depends = ["lint", "deps", "typecheck", "test", "build", "schema:check"]
 run = "echo 'verify passed'"
 
 [tasks.deps]
@@ -37,6 +37,7 @@ depends = ["lint:biome", "lint:oxlint"]
 
 [tasks."lint:biome"]
 hide = true
+depends = ["schema:generate"]
 run = "biome check ."
 
 [tasks."lint:oxlint"]
@@ -65,6 +66,7 @@ run = "bun test"
 
 [tasks.build]
 description = "Build library with tsdown"
+depends = ["schema:generate"]
 sources = ["src/**/*.ts"]
 outputs = ["dist/**"]
 run = "tsdown"
@@ -88,3 +90,12 @@ run = ["changeset version", "bun update --lockfile-only"]
 [tasks."lockfile:sync"]
 description = "Verify bun.lock matches package.json"
 run = "bun install --frozen-lockfile --dry-run"
+
+[tasks."schema:generate"]
+description = "Regenerate src/generated from vendor/npm-registry.yaml"
+run = "openapi-ts"
+
+[tasks."schema:check"]
+description = "Fail if generated registry client drifted"
+depends = ["schema:generate"]
+run = "git diff --exit-code -- src/generated"
