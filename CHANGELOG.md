@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.2
+
+### Patch Changes
+
+- Bootstrap packs with bun and PUTs over fetch, completing npm web OTP without bun publish's TTY prompt. Accepted PUTs now continue immediately while public registry visibility is verified concurrently ([`16985fe`](https://github.com/victor-software-house/bun-release/commit/16985fecc8d1c69e6afcac37cd4d225e79bade73)).
+- Start npm web login with `{ hostname }` so `POST /-/v1/login` is not treated as a publish ([`16985fe`](https://github.com/victor-software-house/bun-release/commit/16985fecc8d1c69e6afcac37cd4d225e79bade73)).
+- Retry an npm trust OTP 401 that omitted challenge URLs without `npm-otp`, instead of sending a web-login token as `npm-otp` ([`16985fe`](https://github.com/victor-software-house/bun-release/commit/16985fecc8d1c69e6afcac37cd4d225e79bade73)).
+- Describe the npm registry contract in vendor OpenAPI and generate the Hey API client and Zod schemas from it ([`16985fe`](https://github.com/victor-software-house/bun-release/commit/16985fecc8d1c69e6afcac37cd4d225e79bade73)).
+- Smoke a published package with bun. Node cannot resolve `import { $ } from 'bun'` ([`2dbff19`](https://github.com/victor-software-house/bun-release/commit/2dbff19754665e20ce959ac726f0a0558c771c26)).
+- Retry GitHub trust list/create with npm-otp after the same web 401 challenge used on publish ([`16985fe`](https://github.com/victor-software-house/bun-release/commit/16985fecc8d1c69e6afcac37cd4d225e79bade73)).
+
 ## 0.0.1
 
 ### Patch Changes
