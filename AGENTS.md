@@ -107,3 +107,10 @@ import `dist` after `depends = ["build"]`.
 - Never `major` on `0.x` unless explicitly decided.
 
 [repo]: https://github.com/victor-software-house/bun-release
+
+## Changes
+
+Plan a behaviour or contract change as an OpenSpec change in
+`openspec/changes/<name>/` before writing code. `openspec/config.yaml` holds
+this repository's context and rules, and `openspec validate <name>` checks the
+change.
