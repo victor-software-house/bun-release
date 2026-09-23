@@ -1,0 +1,26 @@
+schema: spec-driven
+
+context: |
+  bun-release is a TypeScript library for public npm publishing: GitHub OIDC
+  to a short-lived BUN_CONFIG_TOKEN, then bun publish, tags, and first-publish
+  bootstrap. The npm registry client is generated with Hey API.
+  Contracts: AGENTS.md. Releases go through Changesets with patch bumps.
+  Writing style: plain English, short sentences, numbered lists, no em-dashes,
+  no emojis. This repository is public: no local paths, machine names, or
+  private repository names in any artifact.
+
+rules:
+  proposal:
+    - State the measured problem, with numbers where they exist.
+  specs:
+    - Every requirement uses SHALL and has at least one WHEN/THEN scenario.
+    - Scenarios use concrete commands, registry responses, and environment values.
+  design:
+    - Each decision names the alternative considered and why it lost.
+  tasks:
+    - Each task names the command or observation that proves it is done.
+
+operations:
+  archive:
+    guidance:
+      - Update AGENTS.md where the change made it true or false.
