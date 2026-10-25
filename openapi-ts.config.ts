@@ -16,7 +16,7 @@ export default defineConfig({
 		postProcess: [
 			{
 				command: 'oxlint',
-				args: ['--fix', '{{path}}'],
+				args: ['--type-aware', '--fix', '{{path}}'],
 				name: 'oxlint',
 			},
 			{
