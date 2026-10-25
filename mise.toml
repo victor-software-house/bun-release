@@ -4,6 +4,7 @@ min_version = "2026.10.17"
 node = "26.8.1"
 bun = "1.4.4"
 lefthook = "2.1.12"
+gitleaks = "8.30.1"
 
 [settings]
 experimental = true
@@ -43,16 +44,24 @@ run = "biome check ."
 [tasks."lint:oxlint"]
 hide = true
 depends = ["build"]
-run = "bun --bun oxlint"
+run = "bun --bun oxlint --type-aware"
 
 [tasks."lint:fix"]
 description = "Autofix lint: biome --write then oxlint --fix"
 depends = ["build"]
-run = ["biome check --write .", "bun --bun oxlint --fix"]
+run = ["biome check --write .", "bun --bun oxlint --type-aware --fix"]
 
 [tasks.format]
 description = "Format with biome"
 run = "biome format --write ."
+
+[tasks."format:staged"]
+description = "Format the files given as arguments; the git hook passes the staged files"
+run = "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+
+[tasks."lint:oxlint:staged"]
+description = "Syntactic oxlint --fix of the files given as arguments; no type information, no build"
+run = "bun --bun oxlint --fix"
 
 [tasks.typecheck]
 description = "TypeScript typecheck (no emit)"
