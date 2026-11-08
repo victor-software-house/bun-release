@@ -4,8 +4,6 @@ Library for public-npm OIDC → `BUN_CONFIG_TOKEN` → `bun publish`. GitHub is
 [`victor-software-house/bun-release`][repo]. The npm name is unscoped
 **`bun-release`**.
 
-[`CLAUDE.md`](./CLAUDE.md) is only `@AGENTS.md`.
-
 ## Layout
 
 | Path | Role |
